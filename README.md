@@ -37,6 +37,9 @@ resources:
 The GitHub API is queried for a list of all of the repositories belonging to the `org` or the `team`. This list is sorted and hashed, so that subsequent calls will result in the same hash if no repositories have been added or deleted. This hash is returned as the version.
 
 ### `in` : Fetch a list of repositories
-The GitHub API is queried for a list of all of the repositories belonging to the `org` or the `team`. This list is output to `repository-list.txt`.
+The GitHub API is queried for a list of all of the repositories belonging to the `org` or the `team`. This list is output to a file called `repository-list.<ext>` where `<ext>` is defined by the `output_format`.
+
+#### Params
+* `output_format` : _Optional_ (`string`). Specifies which format the list should be in. The options are `txt` (newline separated text file output to `repository-list.txt`) and `json` (a JSON array output to `repository-list.json`). `txt` is the default.
 
 ## `out` : Not supported
