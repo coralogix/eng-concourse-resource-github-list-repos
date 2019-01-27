@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -euxo pipefail
+
+source ./util.sh
+
+input_json="$(cat)"
+resource_version_hash=
+
+response=$(query_github_list_repos "${input_json}")
+resource_version_hash=$(echo ${response} | version_hash)
+
+# construct the final output
+echo "[{\"hash\":\"${resource_version_hash}\"}]"

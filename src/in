@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+set -euxo pipefail
+
+destination_dir=$1
+
+source ./util.sh
+
+input_json="$(cat)"
+response=
+repository_total_count=
+
+org=$(              echo "${input_json}" | jq '.source.org'             -r)
+team=$(             echo "${input_json}" | jq '.source.team? // empty'  -r)
+requested_hash=$(   echo "${input_json}" | jq '.version.hash'           -r)
+
+github_api_response=$(query_github_list_repos "${input_json}")
+current_version_hash=$(echo ${github_api_response} | version_hash)
+
+if [[ "${requested_hash}" != "${current_version_hash}" ]]; then
+  err="[ERROR] The hash of the retrieved list of repositories does not match the provided hash. "
+  err+="This error is probably the result of a change in the repository list between when Concourse "
+  err+="ran a \"check\" on this resource, and now when Concourse is running a \"get\", since the GitHub API "
+  err+="does not permit retrieving the repository list for a specific point in time. Re-checking the "
+  err+="resource will probably fix the problem."
+  echo ${err} 1>&2
+  rm -f /tmp/repositoryTotalCount.txt
+  exit 1
+fi
+
+repository_total_count=$(cat /tmp/repositoryTotalCount.txt)
+rm -f /tmp/repositoryTotalCount.txt
+
+echo ${github_api_response} | tr ' ' '\n' > ${destination_dir}/repository-list.txt
+
+# construct the final output
+output="{"
+output+="\"version\":{\"hash\":\"${current_version_hash}\"},"
+output+="\"metadata\":["
+output+="{\"name\": \"organization\", \"value\": \"${org}\"},"
+if [[ ! -z ${team} ]]; then
+  output+="{\"name\": \"team\", \"value\": \"${team}\"},"
+fi
+output+="{\"name\": \"repository count\", \"value\": \"${repository_total_count}\"}"
+output+="]}"
+echo ${output}
