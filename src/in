@@ -1,18 +1,30 @@
 #!/usr/bin/env bash
 
-set -euxo pipefail
+set -euo pipefail
 
 destination_dir=$1
 
-source ./util.sh
+util_loc="/opt/resource/util.sh"
+
+if [[ ! -f "${util_loc}" ]]; then
+  util_loc="./util.sh"
+fi
+
+# shellcheck source=./util.sh
+source ${util_loc}
 
 input_json="$(cat)"
-response=
 repository_total_count=
 
-org=$(              echo "${input_json}" | jq '.source.org'             -r)
-team=$(             echo "${input_json}" | jq '.source.team? // empty'  -r)
-requested_hash=$(   echo "${input_json}" | jq '.version.hash'           -r)
+org=$(              echo "${input_json}" | jq '.source.org'                     -r)
+team=$(             echo "${input_json}" | jq '.source.team? // empty'          -r)
+requested_hash=$(   echo "${input_json}" | jq '.version.hash'                   -r)
+output_format=$(    echo "${input_json}" | jq '.params.output_format? // "txt"' -r)
+
+if [[ "${output_format}" != "txt" ]] && [[ "${output_format}" != "json" ]]; then
+    echo "[ERROR] An illegal format [${output_format}] was specified. Only json and txt are supported!" 1>&2
+    exit 1
+fi
 
 github_api_response=$(query_github_list_repos "${input_json}")
 current_version_hash=$(echo ${github_api_response} | version_hash)
@@ -24,14 +36,19 @@ if [[ "${requested_hash}" != "${current_version_hash}" ]]; then
   err+="does not permit retrieving the repository list for a specific point in time. Re-checking the "
   err+="resource will probably fix the problem."
   echo ${err} 1>&2
-  rm -f /tmp/repositoryTotalCount.txt
   exit 1
 fi
 
-repository_total_count=$(cat /tmp/repositoryTotalCount.txt)
-rm -f /tmp/repositoryTotalCount.txt
+repository_total_count=$(echo ${github_api_response} | tr ' ' '\n' | wc -l | tr -d ' ')
 
-echo ${github_api_response} | tr ' ' '\n' > ${destination_dir}/repository-list.txt
+if [[ ${output_format} == "txt" ]]; then
+  echo ${github_api_response} | tr ' ' '\n' > ${destination_dir}/repository-list.txt
+elif [[ ${output_format} == "json" ]]; then
+  echo ${github_api_response} | tr -d '\n' | jq -R -s 'split(" ")' > ${destination_dir}/repository-list.json
+else
+  echo "[ERROR] This should be impossible! output_format is set to an unsupported format [${output_format}] and was not caught during validation. Please report this to the developers!" 1>&2
+  exit 1
+fi
 
 # construct the final output
 output="{"

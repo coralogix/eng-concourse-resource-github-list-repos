@@ -2,7 +2,14 @@
 
 set -euxo pipefail
 
-source ./util.sh
+util_loc="/opt/resource/util.sh"
+
+if [[ ! -f "${util_loc}" ]]; then
+  util_loc="./util.sh"
+fi
+
+# shellcheck source=./util.sh
+source ${util_loc}
 
 input_json="$(cat)"
 resource_version_hash=
