@@ -32,7 +32,7 @@ resources:
 ```
 
 ## Behavior
-
+ 
 ### `check` : Check for a change in the repository list
 The GitHub API is queried for a list of all of the repositories belonging to the `org` or the `team`. This list is sorted and hashed, so that subsequent calls will result in the same hash if no repositories have been added or deleted. This hash is returned as the version.
 

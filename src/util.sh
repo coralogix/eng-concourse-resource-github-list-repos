@@ -85,7 +85,7 @@ function query_github_list_repos() {
 
       # Parse response
       # save num repos
-      echo ${repo_response} | jq -r ".data.organization${team_jq_parser}.repositories.totalCount" > /tmp/repositoryTotalCount.txt
+      # echo ${repo_response} | jq -r ".data.organization${team_jq_parser}.repositories.totalCount" > /tmp/repositoryTotalCount.txt
 
       after_cursor=$(echo ${repo_response} | jq -r ".data.organization${team_jq_parser}.repositories.pageInfo.endCursor")
       after_cursor=", after: \\\"${after_cursor}\\\""

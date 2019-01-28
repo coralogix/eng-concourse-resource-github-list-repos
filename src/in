@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-set -euxo pipefail
+set -euo pipefail
 
 destination_dir=$1
 
-source ./util.sh
+source /opt/resource/util.sh
 
 input_json="$(cat)"
 response=
@@ -30,12 +30,10 @@ if [[ "${requested_hash}" != "${current_version_hash}" ]]; then
   err+="does not permit retrieving the repository list for a specific point in time. Re-checking the "
   err+="resource will probably fix the problem."
   echo ${err} 1>&2
-  rm -f /tmp/repositoryTotalCount.txt
   exit 1
 fi
 
-repository_total_count=$(cat /tmp/repositoryTotalCount.txt)
-rm -f /tmp/repositoryTotalCount.txt
+repository_total_count=$(echo ${github_api_response} | tr ' ' '\n' | wc -l | tr -d ' ')
 
 if [[ ${output_format} == "txt" ]]; then
   echo ${github_api_response} | tr ' ' '\n' > ${destination_dir}/repository-list.txt
@@ -43,7 +41,6 @@ elif [[ ${output_format} == "json" ]]; then
   echo ${github_api_response} | jq -R -s 'split("\n")' > ${destination_dir}/repository-list.json
 else
   echo "[ERROR] This should be impossible! output_format is set to an unsupported format [${output_format}] and was not caught during validation. Please report this to the developers!" 1>&2
-  rm -f /tmp/repositoryTotalCount.txt
   exit 1
 fi
 

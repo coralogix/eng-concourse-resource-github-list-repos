@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-set -euxo pipefail
+set -euo pipefail
 
-source ./util.sh
+source /opt/resource/util.sh
 
 input_json="$(cat)"
 resource_version_hash=
