@@ -38,7 +38,7 @@ repository_total_count=$(echo ${github_api_response} | tr ' ' '\n' | wc -l | tr 
 if [[ ${output_format} == "txt" ]]; then
   echo ${github_api_response} | tr ' ' '\n' > ${destination_dir}/repository-list.txt
 elif [[ ${output_format} == "json" ]]; then
-  echo ${github_api_response} | jq -R -s 'split("\n")' > ${destination_dir}/repository-list.json
+  echo ${github_api_response} | tr -d '\n' | jq -R -s 'split(" ")' > ${destination_dir}/repository-list.json
 else
   echo "[ERROR] This should be impossible! output_format is set to an unsupported format [${output_format}] and was not caught during validation. Please report this to the developers!" 1>&2
   exit 1
