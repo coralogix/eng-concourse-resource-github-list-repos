@@ -12,6 +12,9 @@ function query_github_list_repos() {
     team=$(             echo "${input_json}" | jq '.source.team? // empty'           -r)
     exclude_regex=$(    echo "${input_json}" | jq '.source.exclude_regex? // empty'  -r)
     exclude=$(          echo "${input_json}" | jq '.source.exclude[]? // empty'      -r)
+    include_regex=$(    echo "${input_json}" | jq '.source.include_regex? // empty'  -r)
+
+    final_exclude_regex=
 
     # validate
     ## auth_token must be defined
@@ -24,24 +27,37 @@ function query_github_list_repos() {
         echo "[ERROR] org was not defined! Please define org so that this resource will know which organization's repositories you are trying to fetch." 1>&2
         exit 1
     fi
+    ## if include_regex is defined, then neither exclude nor exclude_regex are defined
+    if [[ ! -z "${include_regex}" ]]; then
+      if [[ ! -z "${exclude_regex}" ]] || [[ ! -z "${exclude}" ]]; then
+        echo "[ERROR] It is illegal to define both inclusion and exclusion rules!" >&2
+        exit 1
+      fi
+    else
+      # pre-processing for query
+      ## exclusion regex
+      if [[ ! -z "${exclude_regex}" ]]; then
+          final_exclude_regex=${exclude_regex}
+          if [[ ! -z "${exclude}" ]]; then
+              final_exclude_regex=${final_exclude_regex}'|'
+          fi
+      fi
+      if [[ ! -z "${exclude}" ]]; then
+          exclude=$(echo ${exclude} | paste -s - | sed -e 's/[[:space:]+]/|/g')
+          final_exclude_regex=${final_exclude_regex}${exclude}
+      fi
 
-    # pre-processing for query
-    ## exclusion regex
-    final_exclude_regex=
-    if [[ ! -z "${exclude_regex}" ]]; then
-        final_exclude_regex=${exclude_regex}
-        if [[ ! -z "${exclude}" ]]; then
-            final_exclude_regex=${final_exclude_regex}'|'
-        fi
-    fi
-    if [[ ! -z "${exclude}" ]]; then
-        exclude=$(echo ${exclude} | paste -s - | sed -e 's/[[:space:]+]/|/g')
-        final_exclude_regex=${final_exclude_regex}${exclude}
+      if [[ -z "${final_exclude_regex}" ]]; then
+          # never exclude anything since nothing can come after the end
+          final_exclude_regex='$a'
+      fi
     fi
 
-    if [[ -z "${final_exclude_regex}" ]]; then
-        # never exclude anything since nothing can come after the end
-        final_exclude_regex='$a'
+    grep_cmd=
+    if [[ ! -z "${final_exclude_regex}" ]]; then
+      grep_cmd="grep -Ev ${final_exclude_regex}"
+    else
+      grep_cmd="grep -E ${include_regex}"
     fi
 
     ## team inserts
@@ -90,7 +106,7 @@ function query_github_list_repos() {
       after_cursor=$(echo ${repo_response} | jq -r ".data.organization${team_jq_parser}.repositories.pageInfo.endCursor")
       after_cursor=", after: \\\"${after_cursor}\\\""
       has_next_page=$(echo ${repo_response} | jq -r ".data.organization${team_jq_parser}.repositories.pageInfo.hasNextPage")
-      response+=$(echo ${repo_response} | jq -r ".data.organization${team_jq_parser}.repositories.edges[].node.name" | grep -Ev "${final_exclude_regex}")$'\n'
+      response+=$(echo ${repo_response} | jq -r ".data.organization${team_jq_parser}.repositories.edges[].node.name" | ${grep_cmd} )$'\n'
     done
 
     echo ${response}

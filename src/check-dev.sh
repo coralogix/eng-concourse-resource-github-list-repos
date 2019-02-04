@@ -7,10 +7,11 @@ auth_token=$(security find-generic-password -a "ari-becker" -s "Github Repos Per
 echo "{
   \"source\": {
     \"auth_token\": \"${auth_token}\",
+    \"include_regex\" : \"^infra-\",
     \"org\"       : \"coralogix\"
   }
-}" | ../src/check
+}" | ./check
 
 # \"team\"      : \"ops\",
 # \"exclude\"   : [\"categorization\", \"webapi\"],
-# \"exclude_regex\" : \"infra|sdk|eng-\"
+# \"exclude_regex\" : \"infra|sdk|eng-\",

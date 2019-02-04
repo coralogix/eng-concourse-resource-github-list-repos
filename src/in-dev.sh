@@ -4,15 +4,20 @@ set -euxo pipefail
 
 auth_token=$(security find-generic-password -a "ari-becker" -s "Github Repos Personal Access Token" -w | tr -d " \n")
 
+if [[ ! -d $1 ]]; then
+  mkdir -p $1
+fi
+
 echo "{
   \"source\": {
-    \"auth_token\": \"${auth_token}\",
-    \"org\"       : \"coralogix\"
+    \"auth_token\"    : \"${auth_token}\",
+    \"include_regex\" : \"^infra-\",
+    \"org\"           : \"coralogix\"
   },
   \"version\": {
-    \"hash\": \"09fc854f15daf805a74cafd0d94d292913de78269960401fabc1697f6ce7850cd17c1ed5c89f2145d9a7ea218bf56230d6759f471bde464a39a1e71bbc2debac\"
+    \"hash\": \"d02bdee2cd80e6ec25be6c75a2ee51968c0daaebdb2c68f522c10b5bf26df38fcc31787e415f5914aeba10f73a3b8636b409da485b69b2eb61462c9699b82cf8\"
   }
-}" | ../src/in $1
+}" | ./in $1
 
 # \"team\"      : \"ops\",
 # \"exclude\"   : [\"categorization\", \"webapi\"],

@@ -4,10 +4,16 @@ set -euo pipefail
 
 destination_dir=$1
 
-source /opt/resource/util.sh
+util_loc="/opt/resource/util.sh"
+
+if [[ ! -f "${util_loc}" ]]; then
+  util_loc="./util.sh"
+fi
+
+# shellcheck source=./util.sh
+source ${util_loc}
 
 input_json="$(cat)"
-response=
 repository_total_count=
 
 org=$(              echo "${input_json}" | jq '.source.org'                     -r)
