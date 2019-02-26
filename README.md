@@ -1,5 +1,7 @@
 # GitHub List Repositories Resource
 
+[![Docker Repository on Quay](https://quay.io/repository/coralogix/concourse-resource-github-list-repos/status "Docker Repository on Quay")](https://quay.io/repository/coralogix/concourse-resource-github-list-repos)
+
 Lists the repositories that belong to a GitHub organization or team, but does not clone them.
 
 This resource was implemented to trigger the reconfiguration and deployment of a Concourse CI pipeline which has jobs per repository (and therefore does not need to clone any of the repositories in order to build the pipeline). 
