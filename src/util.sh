@@ -9,12 +9,15 @@ function query_github_list_repos() {
     org=$(              echo "${input_json}" | jq '.source.org'                     -r)
 
     ## optional
-    team=$(             echo "${input_json}" | jq '.source.team? // empty'           -r)
-    exclude_regex=$(    echo "${input_json}" | jq '.source.exclude_regex? // empty'  -r)
-    exclude=$(          echo "${input_json}" | jq '.source.exclude[]? // empty'      -r)
-    include_regex=$(    echo "${input_json}" | jq '.source.include_regex? // empty'  -r)
+    team=$(             echo "${input_json}" | jq '.source.team? // empty'          -r)
+    exclude_regex=$(    echo "${input_json}" | jq '.source.exclude_regex? // empty' -r)
+    exclude=$(          echo "${input_json}" | jq '.source.exclude[]? // empty'     -r)
+    include_regex=$(    echo "${input_json}" | jq '.source.include_regex? // empty' -r)
+    include=$(          echo "${input_json}" | jq '.source.include[]? // empty'     -r)
+
 
     final_exclude_regex=
+    final_include_regex=
 
     # validate
     ## auth_token must be defined
@@ -27,37 +30,38 @@ function query_github_list_repos() {
         echo "[ERROR] org was not defined! Please define org so that this resource will know which organization's repositories you are trying to fetch." 1>&2
         exit 1
     fi
-    ## if include_regex is defined, then neither exclude nor exclude_regex are defined
+    ## include* and exclude* are optional
     if [[ ! -z "${include_regex}" ]]; then
-      if [[ ! -z "${exclude_regex}" ]] || [[ ! -z "${exclude}" ]]; then
-        echo "[ERROR] It is illegal to define both inclusion and exclusion rules!" >&2
-        exit 1
-      fi
-    else
-      # pre-processing for query
-      ## exclusion regex
-      if [[ ! -z "${exclude_regex}" ]]; then
-          final_exclude_regex=${exclude_regex}
-          if [[ ! -z "${exclude}" ]]; then
-              final_exclude_regex=${final_exclude_regex}'|'
-          fi
-      fi
-      if [[ ! -z "${exclude}" ]]; then
-          exclude=$(echo ${exclude} | paste -s - | sed -e 's/[[:space:]+]/|/g')
-          final_exclude_regex=${final_exclude_regex}${exclude}
-      fi
+        final_include_regex=${include_regex}
+	if [[ ! -z "${include}" ]]; then
+            final_include_regex=${final_include_regex}'|'
+        fi
+    fi
+    if [[ ! -z "${exclude_regex}" ]]; then
+        final_exclude_regex=${exclude_regex}
+	if [[ ! -z "${exclude}" ]]; then
+            final_exclude_regex=${final_exclude_regex}'|'
+        fi
+    fi
+    if [[ ! -z "${exclude}" ]]; then
+        exclude=$(echo ${exclude} | paste -s - | sed -e 's/[[:space:]+]/|/g')
+        final_exclude_regex=${final_exclude_regex}${exclude}
+    fi
+    if [[ ! -z "${include}" ]]; then
+        include=$(echo ${include} | paste -s - | sed -e 's/[[:space:]+]/|/g')
+        final_include_regex=${final_include_regex}${include}
+    fi
 
-      if [[ -z "${final_exclude_regex}" ]]; then
-          # never exclude anything since nothing can come after the end
-          final_exclude_regex='$a'
-      fi
+    if [[ ! -z "${final_exclude_regex}" ]] && [[ ! -z "${final_include_regex}" ]]; then
+      echo "[ERROR] It is illegal to define both inclusion and exclusion rules!" >&2
+      exit 1
     fi
 
     grep_cmd=
     if [[ ! -z "${final_exclude_regex}" ]]; then
       grep_cmd="grep -Ev ${final_exclude_regex}"
     else
-      grep_cmd="grep -E ${include_regex}"
+      grep_cmd="grep -E ${final_include_regex}"
     fi
 
     ## team inserts

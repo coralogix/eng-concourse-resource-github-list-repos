@@ -7,7 +7,7 @@ LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.description="A Concourse resource for fetching the list of repositories belonging to a GitHub organization or team." \
       org.label-schema.vcs-url="https://github.com/coralogix/eng-concourse-resource-github-list-repos" \
       org.label-schema.vendor="Coralogix, Inc." \
-      org.label-schema.version="v0.3.1"
+      org.label-schema.version="v0.3.2"
 
 WORKDIR /opt/resource
 
