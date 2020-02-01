@@ -12,6 +12,7 @@ Internally uses the GitHub v4 API (GraphQL).
 * `auth-token` : _Required_ (`string`). A GitHub API auth token. This auth token must have `repo` scope, and if the resource queries the repositories belonging to a team, it must also have `read:org` scope for the organization to which the team belongs.
 * `org` : _Required_ (`string`). The organization whose repositories should be listed.
 * `team` : _Optional_ (`string`). The team whose repositories should be listed. 
+* `v4_endpoint` : _Optional_ (`string`). The graphql endpoint for the git repository. Defaults to ``"https://api.github.com/graphql"`.
 * `exclude_regex` : _Optional_ (`string`). A regular expression of repositories which should not be included in the final list. May not be specified when `include_regex` is specified.
 * `exclude` : _Optional_ (`array[string]`). A list of repositories which should not be included in the final list. This list is appended to the `exclude_regex` to build a final exclusionary rule, and both `exclude` and `exclude_regex` may be specified. May not be specified when `include_regex` is specified.
 * `include_regex` : _Optional_ (`string`). A regular expression of repository names which should be included in the final list (repositories which do not match the regex will not be included). May not be specified when either `exclude_regex` or `exclude` are specified. 

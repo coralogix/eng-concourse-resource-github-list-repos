@@ -9,6 +9,7 @@ function query_github_list_repos() {
     org=$(              echo "${input_json}" | jq '.source.org'                     -r)
 
     ## optional
+    v4_endpoint=$(      echo "${input_json}" | jq '.source.v4_endpoint? // "https://api.github.com/graphql"' -r)
     team=$(             echo "${input_json}" | jq '.source.team? // empty'           -r)
     exclude_regex=$(    echo "${input_json}" | jq '.source.exclude_regex? // empty'  -r)
     exclude=$(          echo "${input_json}" | jq '.source.exclude[]? // empty'      -r)
@@ -97,7 +98,7 @@ function query_github_list_repos() {
 
       ### Don't ask why this is necessary. Just don't. Or ask Mark Zuckerberg.
       repo_gql="$(echo ${repo_gql})"
-      repo_response=$(curl -sL -H "Authorization: bearer ${auth_token}" -X POST -d "{\"query\":\"${repo_gql}\"}" https://api.github.com/graphql)
+      repo_response=$(curl -sL -H "Authorization: bearer ${auth_token}" -X POST -d "{\"query\":\"${repo_gql}\"}" ${v4_endpoint})
 
       # Parse response
       # save num repos
