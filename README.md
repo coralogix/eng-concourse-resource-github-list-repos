@@ -9,7 +9,7 @@ This resource was implemented to trigger the reconfiguration and deployment of a
 Internally uses the GitHub v4 API (GraphQL). 
 
 ## Source Configuration
-* `auth-token` : _Required_ (`string`). A GitHub API auth token. This auth token must have `repo` scope, and if the resource queries the repositories belonging to a team, it must also have `read:org` scope for the organization to which the team belongs.
+* `auth_token` : _Required_ (`string`). A GitHub API auth token. This auth token must have `repo` scope, and if the resource queries the repositories belonging to a team, it must also have `read:org` scope for the organization to which the team belongs.
 * `org` : _Required_ (`string`). The organization whose repositories should be listed.
 * `team` : _Optional_ (`string`). The team whose repositories should be listed. 
 * `v4_endpoint` : _Optional_ (`string`). The graphql endpoint for the git repository. Defaults to ``"https://api.github.com/graphql"`.
@@ -37,7 +37,7 @@ resources:
 - name: repo-list
   type: github-list-repos
   source:
-    auth-token: ((managed-auth-token))
+    auth_token: ((managed-auth-token))
     org: myorg
     team: myteam
     exclude_regex: "internal-helper|utility"
@@ -53,7 +53,7 @@ resources:
 - name: repo-list
   type: github-list-repos
   source:
-    auth-token: ((managed-auth-token))
+    auth_token: ((managed-auth-token))
     org: myorg
     team: myteam
     include_regex: "^myprefix-"
