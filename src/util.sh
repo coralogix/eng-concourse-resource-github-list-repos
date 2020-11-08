@@ -5,15 +5,16 @@ function query_github_list_repos() {
 
     # parse out the input params
     ## required
-    auth_token=$(       echo "${input_json}" | jq '.source.auth_token'              -r)
-    org=$(              echo "${input_json}" | jq '.source.org'                     -r)
+    auth_token=$(       echo "${input_json}" | jq -r '.source.auth_token')
+    org=$(              echo "${input_json}" | jq -r '.source.org')
 
     ## optional
-    v4_endpoint=$(      echo "${input_json}" | jq '.source.v4_endpoint? // "https://api.github.com/graphql"' -r)
-    team=$(             echo "${input_json}" | jq '.source.team? // empty'           -r)
-    exclude_regex=$(    echo "${input_json}" | jq '.source.exclude_regex? // empty'  -r)
-    exclude=$(          echo "${input_json}" | jq '.source.exclude[]? // empty'      -r)
-    include_regex=$(    echo "${input_json}" | jq '.source.include_regex? // empty'  -r)
+    v4_endpoint=$(      echo "${input_json}" | jq -r '.source.v4_endpoint? // "https://api.github.com/graphql"')
+    team=$(             echo "${input_json}" | jq -r '.source.team? // empty')
+    exclude_regex=$(    echo "${input_json}" | jq -r '.source.exclude_regex? // empty')
+    exclude=$(          echo "${input_json}" | jq -r '.source.exclude[]? // empty')
+    include_regex=$(    echo "${input_json}" | jq -r '.source.include_regex? // empty')
+    include_archived=$( echo "${input_json}" | jq -r 'if .source.include_archived == false then false else true end')
 
     final_exclude_regex=
 
@@ -53,6 +54,11 @@ function query_github_list_repos() {
           final_exclude_regex='$a'
       fi
     fi
+    ## include_archived must be 'true' or 'false'
+    if [[ "$include_archived" != 'true' ]] && [[ "$include_archived" != 'false' ]]; then
+      echo "[ERROR][include_archived: $include_archived] In the source for this resource, \"include_archived\" must be set to either true or false, or the field must be omitted!" 1>&2
+      exit 1
+    fi
 
     grep_cmd=
     if [[ ! -z "${final_exclude_regex}" ]]; then
@@ -71,6 +77,12 @@ function query_github_list_repos() {
         team_jq_parser=".team"
     fi
 
+    ## setup include_archived filter
+    include_archive_jq_filter='.'
+    if [[ "$include_archived" == 'false' ]]; then
+      include_archive_jq_filter='select( .isArchived == false )'
+    fi
+
     # iterate through repos
     has_next_page="true"
     after_cursor=
@@ -85,6 +97,7 @@ function query_github_list_repos() {
                     edges {
                         node {
                             name
+                            isArchived
                         }
                     }
                     pageInfo {
@@ -107,7 +120,7 @@ function query_github_list_repos() {
       after_cursor=$(echo ${repo_response} | jq -r ".data.organization${team_jq_parser}.repositories.pageInfo.endCursor")
       after_cursor=", after: \\\"${after_cursor}\\\""
       has_next_page=$(echo ${repo_response} | jq -r ".data.organization${team_jq_parser}.repositories.pageInfo.hasNextPage")
-      response+=$(echo ${repo_response} | jq -r ".data.organization${team_jq_parser}.repositories.edges[].node.name" | ${grep_cmd} )$'\n'
+      response+=$(echo ${repo_response} | jq -r ".data.organization${team_jq_parser}.repositories.edges[].node | $include_archive_jq_filter | .name" | ${grep_cmd} )$'\n'
     done
 
     echo ${response}
